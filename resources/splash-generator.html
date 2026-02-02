@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ria 启动屏幕生成器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #37352F 0%, #2d2b27 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    .content {
+      padding: 40px;
+    }
+    
+    .info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border-left: 4px solid #37352F;
+    }
+    
+    .preview-section {
+      margin: 30px 0;
+      text-align: center;
+    }
+    
+    .preview-section h2 {
+      color: #37352F;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    
+    #splashCanvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      margin: 20px 0;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      margin: 10px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+    }
+
+    .sizes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .size-item {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .size-item strong {
+      color: #37352F;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 ria 启动屏幕生成器</h1>
+      <p>生成 Android 和 iOS 启动屏幕</p>
+    </div>
+    
+    <div class="content">
+      <div class="info">
+        <h3 style="color: #37352F; margin-bottom: 12px;">📱 关于启动屏幕</h3>
+        <p style="color: #666; line-height: 1.8;">
+          启动屏幕是用户打开应用时看到的第一个画面。推荐使用简洁的设计，
+          包含应用图标和名称。背景色使用 Notion 风格的深灰色 (#37352F)。
+        </p>
+      </div>
+
+      <div class="preview-section">
+        <h2>📐 通用启动屏幕 (2048x2048)</h2>
+        <p style="color: #666; margin-bottom: 20px;">此尺寸适用于大多数设备，系统会自动缩放</p>
+        <canvas id="splashCanvas"></canvas>
+        <div>
+          <button class="btn" onclick="downloadSplash()">
+            📥 下载启动屏幕 (PNG)
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h2 style="color: #37352F; margin-bottom: 20px;">📂 文件放置位置</h2>
+        
+        <div class="sizes-grid">
+          <div class="size-item">
+            <strong>🤖 Android</strong>
+            <p style="color: #666; font-size: 14px; margin-top: 8px;">
+              将 PNG 文件保存为：<br>
+              <code>splash.png</code><br><br>
+              放置到：<br>
+              <code>android/app/src/main/res/drawable/</code>
+            </p>
+          </div>
+          
+          <div class="size-item">
+            <strong>🍎 iOS</strong>
+            <p style="color: #666; font-size: 14px; margin-top: 8px;">
+              在 Xcode 中：<br>
+              <code>Assets.xcassets → Splash.imageset</code><br><br>
+              拖入下载的图片
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info" style="margin-top: 30px;">
+        <h3 style="color: #37352F; margin-bottom: 12px;">⚙️ 配置说明</h3>
+        <p style="color: #666; line-height: 1.8; margin-bottom: 12px;">
+          <strong>Android</strong> - 启动屏幕已在 <code>capacitor.config.ts</code> 中配置：
+        </p>
+        <ul style="margin-left: 20px; color: #666; line-height: 1.8;">
+          <li>显示时长：2000ms</li>
+          <li>背景色：#37352F</li>
+          <li>自动隐藏：开启</li>
+          <li>全屏模式：开启</li>
+        </ul>
+        <p style="color: #666; line-height: 1.8; margin-top: 12px;">
+          <strong>iOS</strong> - 使用 Xcode 中的 LaunchScreen.storyboard 或静态图片
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function createSplashScreen() {
+      const canvas = document.getElementById('splashCanvas');
+      const size = 2048;
+      canvas.width = size;
+      canvas.height = size;
+      
+      const ctx = canvas.getContext('2d');
+      
+      // 背景渐变
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#37352F');
+      gradient.addColorStop(1, '#2d2b27');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      // Logo 圆形背景
+      const centerX = size / 2;
+      const centerY = size / 2 - size * 0.05;
+      const logoRadius = size * 0.15;
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, logoRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.fill();
+      
+      // "ria" 文字
+      ctx.fillStyle = '#FFFFFF';
+      const fontSize = size * 0.15;
+      ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ria', centerX, centerY);
+      
+      // 副标题
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const subtitleSize = size * 0.035;
+      ctx.font = `${subtitleSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillText('碎片化想法收集器', centerX, centerY + logoRadius + size * 0.08);
+      
+      // 底部装饰
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.fillRect(centerX - size * 0.3, size * 0.85, size * 0.6, 2);
+      
+      // 版本信息
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      const versionSize = size * 0.025;
+      ctx.font = `${versionSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillText('v0.0.1', centerX, size * 0.92);
+    }
+    
+    function downloadSplash() {
+      const canvas = document.getElementById('splashCanvas');
+      const link = document.createElement('a');
+      link.download = 'splash-2048x2048.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    // 初始化
+    createSplashScreen();
+  </script>
+</body>
+</html>
