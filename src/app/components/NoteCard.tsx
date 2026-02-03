@@ -120,23 +120,31 @@ export function NoteCard({ note, onDelete, onEdit, onTagClick, recentTags = [], 
 
   // Handle touch for swipe to delete
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isDeleting) return;
+    // If already showing delete button, don't allow swiping
+    if (swipeOffset > 0) {
+      return;
+    }
+    
     const startX = e.touches[0].clientX;
-    let currentX = startX;
+    let lastDiff = 0;
 
     const handleTouchMove = (moveEvent: TouchEvent) => {
-      currentX = moveEvent.touches[0].clientX;
+      const currentX = moveEvent.touches[0].clientX;
       const diff = startX - currentX;
       
+      // Allow swipe up to 100px
       if (diff > 0 && diff <= 100) {
+        lastDiff = diff;
         setSwipeOffset(diff);
       }
     };
 
     const handleTouchEnd = () => {
-      if (swipeOffset > 60) {
-        setIsDeleting(true);
+      // If swiped more than 50px, lock at 80px to show delete button
+      if (lastDiff > 50) {
+        setSwipeOffset(80);
       } else {
+        // Otherwise, reset
         setSwipeOffset(0);
       }
       document.removeEventListener('touchmove', handleTouchMove);
@@ -147,36 +155,66 @@ export function NoteCard({ note, onDelete, onEdit, onTagClick, recentTags = [], 
     document.addEventListener('touchend', handleTouchEnd);
   };
 
-  const handleDeleteClick = () => {
-    if (window.confirm('确定要删除这条笔记吗？')) {
-      onDelete(note.id);
-    } else {
-      setIsDeleting(false);
+  // Close delete button when clicking outside
+  const handleCardClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (swipeOffset > 0) {
+      e.stopPropagation();
       setSwipeOffset(0);
     }
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (window.confirm('确定要删除这条笔记吗？')) {
+      onDelete(note.id);
+    } else {
+      setSwipeOffset(0);
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSwipeOffset(0);
+  };
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Delete Button Background */}
-      {(swipeOffset > 0 || isDeleting) && (
+    <div className="relative overflow-hidden">      
+      {/* Delete Button Background - Must be above backdrop */}
+      {swipeOffset > 0 && (
         <button
           onClick={handleDeleteClick}
-          className="absolute right-0 top-0 bottom-0 w-20 bg-destructive flex items-center justify-center rounded-r-2xl"
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleDeleteClick(e as any);
+          }}
+          className="absolute right-0 top-0 bottom-0 w-20 bg-destructive flex items-center justify-center rounded-r-2xl z-50"
         >
           <Trash2 className="w-5 h-5 text-white" />
         </button>
       )}
+      
+      {/* Backdrop for closing swipe - Below delete button */}
+      {swipeOffset > 0 && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={handleBackdropClick}
+          onTouchEnd={handleBackdropClick}
+        />
+      )}
 
       <div 
         ref={cardRef}
-        className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm group cursor-pointer transition-transform"
+        className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm group cursor-pointer transition-transform relative z-45"
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
           transition: swipeOffset === 0 ? 'transform 0.3s ease' : 'none'
         }}
         onTouchStart={handleTouchStart}
         onDoubleClick={handleDoubleClick}
+        onClick={handleCardClick}
       >
         {/* Menu Button */}
         <button
@@ -225,6 +263,7 @@ export function NoteCard({ note, onDelete, onEdit, onTagClick, recentTags = [], 
         )}
 
         <p className="text-sm sm:text-base leading-normal sm:leading-relaxed mb-2 sm:mb-3 whitespace-pre-wrap pr-8">{note.content}</p>
+        
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {note.tags.map((tag, index) => (

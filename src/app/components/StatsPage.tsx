@@ -10,6 +10,7 @@ interface StatsPageProps {
 
 export function StatsPage({ notes, onClose }: StatsPageProps) {
   const [trendPeriod, setTrendPeriod] = useState<7 | 30>(7);
+  const [heatmapPeriod, setHeatmapPeriod] = useState<'week' | 'month' | 'quarter'>('week');
 
   // 计算基础数据
   const getTotalNotes = () => notes.length;
@@ -155,49 +156,152 @@ export function StatsPage({ notes, onClose }: StatsPageProps) {
     return { label: '晚上 (18:00-6:00)', count: timeSlots.evening, percentage: (timeSlots.evening / notes.length * 100).toFixed(0) };
   };
 
-  // 热力图数据（动态周数）
+  // 热力图数据（本周/本月/本季度，不同展示方式）
   const getHeatmapData = () => {
-    if (notes.length === 0) {
-      return { data: [], weeks: 4 }; // 默认4周
-    }
-
-    // 计算用户使用周数
-    const firstNoteTime = Math.min(...notes.map(n => n.timestamp));
-    const now = Date.now();
-    const usageDays = Math.floor((now - firstNoteTime) / (1000 * 60 * 60 * 24));
-    const usageWeeks = Math.ceil(usageDays / 7);
-
-    // 根据使用时长动态决定显示周数
-    let weeks = 4; // 默认最少4周
-    if (usageWeeks <= 4) {
-      weeks = 4;
-    } else if (usageWeeks <= 8) {
-      weeks = Math.max(usageWeeks, 6); // 至少显示6周
-    } else if (usageWeeks <= 12) {
-      weeks = Math.max(usageWeeks, 8); // 至少显示8周
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=周日, 1=周一, ..., 6=周六
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    if (heatmapPeriod === 'week') {
+      // 本周：返回7天的数据（周一到周日），用于进度条展示
+      const thisMonday = new Date(today);
+      thisMonday.setDate(today.getDate() - daysFromMonday);
+      thisMonday.setHours(0, 0, 0, 0);
+      
+      const weekData = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(thisMonday);
+        date.setDate(thisMonday.getDate() + i);
+        const dayStart = date.getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+        
+        const count = notes.filter(
+          note => note.timestamp >= dayStart && note.timestamp < dayEnd
+        ).length;
+        
+        const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+        
+        weekData.push({
+          day: dayNames[i],
+          date: dateStr,
+          count,
+          isToday: date.toDateString() === today.toDateString(),
+          isFuture: date > today,
+        });
+      }
+      
+      return { type: 'week', weekData };
+    } else if (heatmapPeriod === 'month') {
+      // 本月：返回整月的日历数据（横向7列网格布局）
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate(); // 当月天数
+      
+      // 找到本月1号是星期几
+      const firstDay = new Date(year, month, 1);
+      const firstDayOfWeek = firstDay.getDay();
+      const firstDayIndex = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // 周一=0, 周日=6
+      
+      // 计算需要多少周（向上取整）
+      const totalCells = firstDayIndex + daysInMonth;
+      const weeks = Math.ceil(totalCells / 7);
+      
+      // 创建日历数据：每周一个数组，每天一个对象
+      const calendarData = [];
+      
+      for (let week = 0; week < weeks; week++) {
+        const weekData = [];
+        for (let day = 0; day < 7; day++) {
+          const cellIndex = week * 7 + day;
+          const dayOfMonth = cellIndex - firstDayIndex + 1;
+          
+          if (dayOfMonth >= 1 && dayOfMonth <= daysInMonth) {
+            // 属于本月的日期
+            const date = new Date(year, month, dayOfMonth);
+            const dayStart = date.getTime();
+            const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+            
+            const count = notes.filter(
+              note => note.timestamp >= dayStart && note.timestamp < dayEnd
+            ).length;
+            
+            const isToday = date.toDateString() === today.toDateString();
+            
+            weekData.push({
+              date: dayOfMonth,
+              count,
+              isToday,
+              isEmpty: false,
+            });
+            
+            console.log(`📊 本月日历：${dayOfMonth}日 (${['一','二','三','四','五','六','日'][day]}) → ${count}条`);
+          } else {
+            // 空格
+            weekData.push({
+              date: 0,
+              count: 0,
+              isToday: false,
+              isEmpty: true,
+            });
+          }
+        }
+        calendarData.push(weekData);
+      }
+      
+      return { type: 'month', calendarData, weeks };
     } else {
-      weeks = 12; // 最多12周
-    }
-
-    const data: number[][] = Array(7).fill(0).map(() => Array(weeks).fill(0));
-    const startDate = new Date(now - weeks * 7 * 24 * 60 * 60 * 1000);
-    startDate.setHours(0, 0, 0, 0);
-
-    notes.forEach(note => {
-      const noteDate = new Date(note.timestamp);
-      const diffTime = noteDate.getTime() - startDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays >= 0 && diffDays < weeks * 7) {
+      // 本季度：纵向热力图（保持原有逻辑）
+      const thisMonday = new Date(today);
+      thisMonday.setDate(today.getDate() - daysFromMonday);
+      thisMonday.setHours(0, 0, 0, 0);
+      
+      // 本季度第一天所在的周一
+      const quarterStartMonth = Math.floor(today.getMonth() / 3) * 3;
+      const quarterStart = new Date(today.getFullYear(), quarterStartMonth, 1);
+      const quarterStartDayOfWeek = quarterStart.getDay();
+      const quarterStartDaysFromMonday = quarterStartDayOfWeek === 0 ? 6 : quarterStartDayOfWeek - 1;
+      
+      const startMonday = new Date(quarterStart);
+      startMonday.setDate(quarterStart.getDate() - quarterStartDaysFromMonday);
+      startMonday.setHours(0, 0, 0, 0);
+      
+      // 本周日 23:59:59
+      const thisSunday = new Date(thisMonday);
+      thisSunday.setDate(thisMonday.getDate() + 6);
+      thisSunday.setHours(23, 59, 59, 999);
+      
+      // 计算周数
+      const diffTime = thisMonday.getTime() - startMonday.getTime();
+      const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+      const weeks = diffWeeks + 1;
+      
+      console.log(`📊 本季度热力图范围：${startMonday.toLocaleDateString()} ~ ${thisSunday.toLocaleDateString()}，共${weeks}周`);
+      
+      // 初始化数据数组
+      const data: number[][] = Array(7).fill(0).map(() => Array(weeks).fill(0));
+      
+      notes.forEach(note => {
+        const noteDate = new Date(note.timestamp);
+        noteDate.setHours(0, 0, 0, 0);
+        
+        if (noteDate.getTime() < startMonday.getTime() || noteDate.getTime() > thisSunday.getTime()) {
+          return;
+        }
+        
+        const diffTime = noteDate.getTime() - startMonday.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const weekIndex = Math.floor(diffDays / 7);
-        const dayIndex = diffDays % 7;
-        if (weekIndex < weeks && dayIndex < 7) {
+        const noteDayOfWeek = noteDate.getDay();
+        const dayIndex = noteDayOfWeek === 0 ? 6 : noteDayOfWeek - 1;
+        
+        if (weekIndex >= 0 && weekIndex < weeks && dayIndex >= 0 && dayIndex < 7) {
           data[dayIndex][weekIndex]++;
         }
-      }
-    });
-
-    return { data, weeks };
+      });
+      
+      return { type: 'quarter', data, weeks };
+    }
   };
 
   const heatmapData = getHeatmapData();
@@ -248,6 +352,8 @@ export function StatsPage({ notes, onClose }: StatsPageProps) {
           topTags={topTags}
           activeTimeSlot={activeTimeSlot}
           heatmapData={heatmapData}
+          heatmapPeriod={heatmapPeriod}
+          setHeatmapPeriod={setHeatmapPeriod}
           getHeatColor={getHeatColor}
           heatLegendRanges={heatLegendRanges}
         />
@@ -269,7 +375,9 @@ interface StatsViewAProps {
   trendData: { date: string, count: number }[];
   topTags: [string, number][];
   activeTimeSlot: { label: string, count: number, percentage: string };
-  heatmapData: { data: number[][], weeks: number };
+  heatmapData: any;
+  heatmapPeriod: 'week' | 'month' | 'quarter';
+  setHeatmapPeriod: (period: 'week' | 'month' | 'quarter') => void;
   getHeatColor: (value: number) => string;
   heatLegendRanges: string[];
 }
@@ -288,6 +396,8 @@ function StatsViewA({
   topTags,
   activeTimeSlot,
   heatmapData,
+  heatmapPeriod,
+  setHeatmapPeriod,
   getHeatColor,
   heatLegendRanges,
 }: StatsViewAProps) {
@@ -333,52 +443,182 @@ function StatsViewA({
 
       {/* 记录热力图 - 移到这里，在趋势图之前 */}
       <div className="bg-white rounded-xl p-3 mb-3 border border-border">
-        <h2 className="text-base font-medium mb-3">
-          记录热力图（{heatmapData.weeks}周）
-        </h2>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-1" style={{ minWidth: '280px' }}>
-            {/* 星期标签 */}
-            <div className="flex flex-col gap-0.5 pr-1.5">
-              <div className="h-2.5 text-[10px] text-muted-foreground flex items-center"></div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-medium">记录热力图</h2>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => setHeatmapPeriod('week')}
+              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+                heatmapPeriod === 'week' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-accent text-accent-foreground hover:bg-accent/70'
+              }`}
+            >
+              本周
+            </button>
+            <button
+              onClick={() => setHeatmapPeriod('month')}
+              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+                heatmapPeriod === 'month' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-accent text-accent-foreground hover:bg-accent/70'
+              }`}
+            >
+              本月
+            </button>
+            <button
+              onClick={() => setHeatmapPeriod('quarter')}
+              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+                heatmapPeriod === 'quarter' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-accent text-accent-foreground hover:bg-accent/70'
+              }`}
+            >
+              本季度
+            </button>
+          </div>
+        </div>
+
+        {/* 本周：垂直进度条 */}
+        {heatmapData.type === 'week' && heatmapData.weekData && (
+          <div className="space-y-0.5">
+            {heatmapData.weekData.map((item, index) => {
+              const maxCount = Math.max(...heatmapData.weekData!.map(d => d.count), 1);
+              const percentage = (item.count / maxCount) * 100;
+              
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="w-7 text-[10px] text-muted-foreground">
+                    {item.day}
+                  </div>
+                  <div className="w-14 text-[10px] text-muted-foreground">
+                    {item.date}
+                  </div>
+                  <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        item.count === 0 
+                          ? 'bg-muted' 
+                          : item.isToday
+                          ? 'bg-primary/90'
+                          : 'bg-primary/60'
+                      }`}
+                      style={{ width: `${Math.max(percentage, item.count > 0 ? 8 : 0)}%` }}
+                    />
+                  </div>
+                  <div className={`w-7 text-[10px] text-right font-medium ${
+                    item.isToday ? 'text-primary' : 'text-foreground'
+                  }`}>
+                    {item.count}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 本月：横向7列网格布局 */}
+        {heatmapData.type === 'month' && heatmapData.calendarData && (
+          <div>
+            {/* 星期标签行 */}
+            <div className="grid grid-cols-7 gap-0.5 mb-1.5">
               {['一', '二', '三', '四', '五', '六', '日'].map((day, i) => (
-                <div key={i} className="h-2.5 text-[10px] text-muted-foreground flex items-center">
+                <div key={i} className="text-center text-[10px] text-muted-foreground font-medium">
                   {day}
                 </div>
               ))}
             </div>
-            {/* 热力图格子 */}
-            <div className="flex gap-0.5 flex-1">
-              {heatmapData.data.length > 0 && heatmapData.data[0].map((_, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-0.5 flex-1">
-                  {heatmapData.data.map((week, dayIndex) => (
+            
+            {/* 日历网格 */}
+            <div className="space-y-0.5">
+              {heatmapData.calendarData.map((week, weekIndex) => (
+                <div key={weekIndex} className="grid grid-cols-7 gap-0.5">
+                  {week.map((day, dayIndex) => (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`h-2.5 rounded-sm ${getHeatColor(week[weekIndex])}`}
-                      title={`${week[weekIndex]} 条笔记`}
-                    />
+                      className={`h-6 rounded flex flex-col items-center justify-center text-[10px] transition-all ${
+                        day.isEmpty
+                          ? 'bg-transparent'
+                          : day.isToday
+                          ? `${getHeatColor(day.count)} ring-1 ring-primary`
+                          : getHeatColor(day.count)
+                      }`}
+                    >
+                      {!day.isEmpty && (
+                        <>
+                          <div className={`font-medium leading-none ${day.isToday ? 'text-primary' : 'text-foreground'}`}>
+                            {day.date}
+                          </div>
+                          {day.count > 0 && (
+                            <div className="text-[8px] text-muted-foreground leading-none mt-0.5">
+                              {day.count}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   ))}
                 </div>
               ))}
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
-          <span>少</span>
-          <div className="flex gap-0.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-muted" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary/15" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary/35" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary/60" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-primary/90" />
+        )}
+
+        {/* 本季度：纵向热力图 */}
+        {heatmapData.type === 'quarter' && heatmapData.data && (
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-1.5" style={{ minWidth: '280px' }}>
+              {/* 星期标签 */}
+              <div className="flex flex-col gap-0.5 justify-start pt-3">
+                {['一', '二', '三', '四', '五', '六', '日'].map((day, i) => (
+                  <div key={i} className="h-3 text-[10px] text-muted-foreground flex items-center leading-none">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              {/* 热力图格子 */}
+              <div className="flex gap-0.5 flex-1">
+                {heatmapData.data.length > 0 && heatmapData.data[0].map((_, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col gap-0.5 flex-1">
+                    {/* 周标签（可选） */}
+                    <div className="h-3 text-[9px] text-muted-foreground text-center leading-none mb-0.5">
+                      {weekIndex === heatmapData.weeks! - 1 ? '本周' : ''}
+                    </div>
+                    {heatmapData.data!.map((week, dayIndex) => (
+                      <div
+                        key={`${weekIndex}-${dayIndex}`}
+                        className={`h-3 rounded-sm ${getHeatColor(week[weekIndex])}`}
+                        title={`${week[weekIndex]} 条笔记`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <span>多</span>
-        </div>
-        <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
-          {heatLegendRanges.map((range, index) => (
-            <span key={index}>{range}</span>
-          ))}
-        </div>
+        )}
+
+        {/* 图例 - 只在本月和本季度显示 */}
+        {(heatmapData.type === 'month' || heatmapData.type === 'quarter') && (
+          <>
+            <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
+              <span>少</span>
+              <div className="flex gap-0.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-muted" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-primary/15" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-primary/35" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-primary/60" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-primary/90" />
+              </div>
+              <span>多</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+              {heatLegendRanges.map((range, index) => (
+                <span key={index}>{range}</span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* 记录趋势 */}

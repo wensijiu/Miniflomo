@@ -39,6 +39,7 @@ interface Note {
   content: string;
   tags: string[];
   timestamp: number;
+  images?: string[]; // Array of base64 image data or URLs
 }
 
 interface User {
@@ -189,11 +190,28 @@ export async function createNote(phone: string, content: string, tags: string[])
       body: JSON.stringify({ content, tags }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      return { success: false, error: data.error || 'Failed to create note' };
+      const errorText = await response.text();
+      console.error('Create note failed:', response.status, errorText);
+      
+      // If backend fails, use localStorage fallback
+      console.warn('⚠️ Backend failed, using localStorage fallback');
+      const note: Note = {
+        id: Date.now().toString(),
+        content,
+        tags,
+        timestamp: Date.now(),
+      };
+      
+      const localNotes = localStorage.getItem('ria-notes');
+      const notes = localNotes ? JSON.parse(localNotes) : [];
+      notes.unshift(note);
+      localStorage.setItem('ria-notes', JSON.stringify(notes));
+      
+      return { success: true, note };
     }
+
+    const data = await response.json();
 
     // Also save to localStorage for offline support
     const localNotes = await getNotes(phone);

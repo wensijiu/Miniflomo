@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Star } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface QuickInputPageProps {
   onAddNote: (content: string, tags: string[]) => void;
