@@ -70,7 +70,7 @@ const FAQ_CATEGORIES = [
     items: [
       {
         q: '随机回顾有什么用？',
-        a: '随机回顾会从你的所有笔记中随机��取一条展示，帮助你重新发现过往的思考，创造思维碰撞的机会。',
+        a: '随机回顾会从你的所有笔记中随机取一条展示，帮助你重新发现过往的思考，创造思维碰撞的机会。',
       },
       {
         q: '如何使用随机回顾？',
@@ -184,7 +184,7 @@ export function HelpPage({ onClose }: HelpPageProps) {
     <div className="fixed inset-0 bg-background z-50">
       <div className="h-screen flex flex-col max-w-lg mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative">
+        <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative pt-safe">
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"

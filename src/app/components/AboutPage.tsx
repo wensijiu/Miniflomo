@@ -12,7 +12,7 @@ export function AboutPage({ onClose }: AboutPageProps) {
     <div className="fixed inset-0 bg-background z-50">
       <div className="h-screen flex flex-col max-w-lg mx-auto">
         {/* Header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-border bg-white sticky top-0 z-10">
+        <div className="h-14 flex items-center justify-between px-4 border-b border-border bg-white sticky top-0 z-10 pt-safe">
           <div className="w-8" />
           <button
             onClick={onClose}

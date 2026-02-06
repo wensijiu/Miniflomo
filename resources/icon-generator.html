@@ -262,8 +262,8 @@
       canvas.height = size;
       const ctx = canvas.getContext('2d');
 
-      // 背景
-      ctx.fillStyle = '#37352F';
+      // 背景 - 黑色
+      ctx.fillStyle = '#000000';
       if (isRounded) {
         // 圆角矩形
         const cornerRadius = size * 0.225; // iOS 标准圆角
@@ -283,13 +283,52 @@
         ctx.fillRect(0, 0, size, size);
       }
 
-      // 文字 "ria"
+      // 绘制几何 R 图形（立体效果）
       ctx.fillStyle = '#FFFFFF';
-      const fontSize = size * 0.38;
-      ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif`;
+      
+      const centerX = size / 2;
+      const centerY = size * 0.42; // 稍微靠上
+      const scale = size * 0.00085; // 缩放系数
+      
+      // 主竖线 - 左���
+      ctx.fillRect(
+        centerX - 80 * scale, 
+        centerY - 100 * scale, 
+        50 * scale, 
+        200 * scale
+      );
+      
+      // 上半圆弧 - 右侧凸起部分
+      ctx.beginPath();
+      ctx.arc(
+        centerX - 30 * scale, 
+        centerY - 30 * scale, 
+        70 * scale, 
+        0, 
+        Math.PI
+      );
+      ctx.closePath();
+      ctx.fill();
+      
+      // 对角线斜杠 - 右下部分
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(-25 * Math.PI / 180);
+      ctx.fillRect(
+        -10 * scale, 
+        10 * scale, 
+        50 * scale, 
+        110 * scale
+      );
+      ctx.restore();
+
+      // 绘制 "Ria" 文字 - 在下方
+      ctx.fillStyle = '#FFFFFF';
+      const fontSize = size * 0.18;
+      ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif`;
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ria', size / 2, size / 2 + fontSize * 0.05);
+      ctx.textBaseline = 'top';
+      ctx.fillText('Ria', size / 2, size * 0.72);
 
       return canvas;
     }

@@ -96,7 +96,7 @@ export function CalendarPage({ notes, onNoteDelete, onNoteUpdate, onBackToList }
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative pt-safe">
         {onBackToList && (
           <button
             onClick={onBackToList}

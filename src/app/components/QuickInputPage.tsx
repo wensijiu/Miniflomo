@@ -11,7 +11,6 @@ export function QuickInputPage({ onAddNote, recentTags, frequentTags }: QuickInp
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
   const [tagView, setTagView] = useState<'frequent' | 'recent'>('frequent');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,8 +27,6 @@ export function QuickInputPage({ onAddNote, recentTags, frequentTags }: QuickInp
       setContent('');
       setTags([]);
       setTagInput('');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
     }
   };
 
@@ -235,13 +232,6 @@ export function QuickInputPage({ onAddNote, recentTags, frequentTags }: QuickInp
           <span>发送</span>
         </button>
       </div>
-
-      {/* Success Toast */}
-      {showSuccess && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-foreground text-background px-6 py-3 rounded-full shadow-lg z-50">
-          已保存
-        </div>
-      )}
     </div>
   );
 }

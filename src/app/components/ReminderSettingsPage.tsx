@@ -103,7 +103,7 @@ export function ReminderSettingsPage({ onClose }: ReminderSettingsPageProps) {
     <div className="fixed inset-0 bg-background z-50">
       <div className="h-screen flex flex-col max-w-lg mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative">
+        <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative pt-safe">
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"

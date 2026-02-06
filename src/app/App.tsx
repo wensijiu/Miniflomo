@@ -13,8 +13,7 @@ import { HelpPage } from '@/app/components/HelpPage';
 import { GoalSettings, loadGoals, saveGoals, Goals } from '@/app/components/GoalSettings';
 import { AuthPage } from '@/app/components/AuthPage';
 import { Note } from '@/app/components/NoteCard';
-import { Toaster } from '@/app/components/ui/sonner';
-import { toast } from 'sonner';
+import { SimpleToast } from '@/app/components/SimpleToast';
 import * as api from '@/app/utils/api';
 
 interface User {
@@ -36,6 +35,8 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [goals, setGoals] = useState<Goals>(loadGoals());
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -79,7 +80,8 @@ function App() {
             const parsedLocalNotes = JSON.parse(localNotes);
             if (parsedLocalNotes.length > 0 && loadedNotes === parsedLocalNotes) {
               console.warn('📱 Using local storage. Your data is only saved on this device.');
-              toast.info('当前使用本地存储，数据仅保存在此设备', { duration: 3000 });
+              setToastMessage('当前使用本地存储，数据仅保存在此设备');
+              setShowToast(true);
             }
           } catch (e) {
             // Ignore parse errors
@@ -100,9 +102,11 @@ function App() {
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('ria-user', JSON.stringify(userData));
-      toast.success(`欢迎回来，${result.user.nickname}！`);
+      setToastMessage(`欢迎回来，${result.user.nickname}！`);
+      setShowToast(true);
     } else {
-      toast.error(result.error || '登录失败');
+      setToastMessage(result.error || '登录失败');
+      setShowToast(true);
     }
   };
 
@@ -114,9 +118,11 @@ function App() {
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('ria-user', JSON.stringify(userData));
-      toast.success(`注册成功，欢迎！`);
+      setToastMessage(`注册成功，欢迎！`);
+      setShowToast(true);
     } else {
-      toast.error(result.error || '注册失败');
+      setToastMessage(result.error || '注册失败');
+      setShowToast(true);
     }
   };
 
@@ -126,7 +132,8 @@ function App() {
     localStorage.removeItem('ria-user');
     setNotes([]);
     setActiveTab('input');
-    toast.success('已退出登录');
+    setToastMessage('已退出登录');
+    setShowToast(true);
   };
 
   // Show auth page if not authenticated
@@ -134,7 +141,7 @@ function App() {
     return (
       <div className="h-screen flex flex-col bg-background max-w-lg mx-auto relative">
         <AuthPage onLogin={handleLogin} onRegister={handleRegister} />
-        <Toaster />
+        <SimpleToast message={toastMessage} show={showToast} onClose={() => setShowToast(false)} />
       </div>
     );
   }
@@ -146,9 +153,11 @@ function App() {
     
     if (result.success && result.note) {
       setNotes([result.note, ...notes]);
-      toast.success('笔记已保存');
+      setToastMessage('笔记已保存');
+      setShowToast(true);
     } else {
-      toast.error(result.error || '保存失败');
+      setToastMessage(result.error || '保存失败');
+      setShowToast(true);
     }
   };
 
@@ -159,9 +168,11 @@ function App() {
     
     if (result.success) {
       setNotes(notes.filter(note => note.id !== id));
-      toast.success('笔记已删除');
+      setToastMessage('笔记已删除');
+      setShowToast(true);
     } else {
-      toast.error(result.error || '删除失败');
+      setToastMessage(result.error || '删除失败');
+      setShowToast(true);
     }
   };
 
@@ -174,9 +185,11 @@ function App() {
       setNotes(notes.map(note => 
         note.id === id ? result.note! : note
       ));
-      toast.success('笔记已更新');
+      setToastMessage('笔记已更新');
+      setShowToast(true);
     } else {
-      toast.error(result.error || '更新失败');
+      setToastMessage(result.error || '更新失败');
+      setShowToast(true);
     }
   };
 
@@ -212,9 +225,11 @@ function App() {
         ...note,
         tags: note.tags.map(tag => tag === oldTag ? newTag : tag)
       })));
-      toast.success('标签已重命名');
+      setToastMessage('标签已重命名');
+      setShowToast(true);
     } else {
-      toast.error('部分笔记更新失败');
+      setToastMessage('部分笔记更新失败');
+      setShowToast(true);
     }
   };
 
@@ -241,9 +256,11 @@ function App() {
         ...note,
         tags: note.tags.filter(tag => tag !== tagToDelete)
       })));
-      toast.success('标签已删除');
+      setToastMessage('标签已删除');
+      setShowToast(true);
     } else {
-      toast.error('部分笔记更新失败');
+      setToastMessage('部分笔记更新失败');
+      setShowToast(true);
     }
   };
 
@@ -350,7 +367,7 @@ function App() {
           }
         }} />
       )}
-      <Toaster />
+      <SimpleToast message={toastMessage} show={showToast} onClose={() => setShowToast(false)} />
     </div>
   );
 }

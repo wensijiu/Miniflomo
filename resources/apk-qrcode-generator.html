@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK 链接转二维码</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #qrcode {
+            margin-top: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        #qrcode.show {
+            display: block;
+        }
+
+        #qrcode canvas {
+            max-width: 100%;
+            height: auto !important;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .tips {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .tips h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .tips ul {
+            margin-left: 20px;
+        }
+
+        .tips li {
+            margin-bottom: 5px;
+        }
+
+        .tips a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .tips a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 APK 链接转二维码</h1>
+        <p class="subtitle">输入下载链接，快速生成二维码</p>
+
+        <div class="input-group">
+            <label for="url">APK 下载链接</label>
+            <input 
+                type="text" 
+                id="url" 
+                placeholder="例如：https://github.com/user/repo/releases/download/v1.0/ria.apk"
+            >
+        </div>
+
+        <button onclick="generateQRCode()">🎨 生成二维码</button>
+
+        <div id="qrcode"></div>
+
+        <div class="tips">
+            <h3>💡 使用提示</h3>
+            <ul>
+                <li><strong>蓝奏云</strong>：<a href="https://pc.woozooo.com" target="_blank">上传</a>后复制链接</li>
+                <li><strong>GitHub</strong>：Releases 页面右键复制 APK 链接</li>
+                <li><strong>奶牛快传</strong>：<a href="https://cowtransfer.com" target="_blank">上传</a>后复制分享链接</li>
+                <li><strong>本地服务器</strong>：http://你的IP:8000/ria.apk</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        let qrcodeInstance = null;
+
+        function generateQRCode() {
+            const url = document.getElementById('url').value.trim();
+            
+            if (!url) {
+                alert('请输入 APK 下载链接！');
+                return;
+            }
+
+            const qrcodeDiv = document.getElementById('qrcode');
+            
+            // 清空之前的二维码
+            qrcodeDiv.innerHTML = '';
+            
+            // 创建下载按钮
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = '💾 下载二维码';
+            downloadBtn.onclick = downloadQRCode;
+            
+            // 生成二维码
+            qrcodeInstance = new QRCode(qrcodeDiv, {
+                text: url,
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            qrcodeDiv.classList.add('show');
+            qrcodeDiv.appendChild(downloadBtn);
+        }
+
+        function downloadQRCode() {
+            const canvas = document.querySelector('#qrcode canvas');
+            const url = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'ria-qrcode.png';
+            link.href = url;
+            link.click();
+        }
+
+        // 回车键生成
+        document.getElementById('url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateQRCode();
+            }
+        });
+    </script>
+</body>
+</html>

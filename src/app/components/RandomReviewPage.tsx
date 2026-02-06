@@ -107,7 +107,7 @@ export function RandomReviewPage({ notes, onClose }: RandomReviewPageProps) {
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/30">
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white/80 backdrop-blur-sm relative">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white/80 backdrop-blur-sm relative pt-safe">
         {onClose && (
           <button
             onClick={onClose}

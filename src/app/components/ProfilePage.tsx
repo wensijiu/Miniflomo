@@ -90,7 +90,7 @@ export function ProfilePage({ notes, onRandomReview, onStats, onGoalSettings, on
             />
             <MenuItem
               icon={<TrendingUp className="w-5 h-5" />}
-              label="数据统"
+              label="数据统计"
               onClick={onStats}
             />
             <MenuItem
@@ -166,14 +166,14 @@ function MenuItem({ icon, label, description, onClick, showBorder = true }: Menu
         showBorder ? 'border-b border-border' : ''
       }`}
     >
-      <div className="text-primary">{icon}</div>
-      <div className="flex-1">
-        <div className="text-foreground">{label}</div>
+      <div className="text-primary flex-shrink-0">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{label}</div>
         {description && (
           <div className="text-sm text-muted-foreground mt-0.5">{description}</div>
         )}
       </div>
-      <div className="text-muted-foreground">›</div>
+      <div className="text-muted-foreground flex-shrink-0">›</div>
     </button>
   );
 }

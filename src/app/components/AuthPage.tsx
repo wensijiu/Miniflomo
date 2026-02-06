@@ -66,10 +66,10 @@ export function AuthPage({ onLogin, onRegister }: AuthPageProps) {
     <div className="h-full bg-background flex flex-col items-center justify-center px-6">
       {/* Logo & Title */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <span className="text-4xl">📝</span>
+        <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center">
+          <img src="/logo.png" alt="ria logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-2xl font-medium text-foreground">ria</h1>
+        <p className="text-sm text-muted-foreground mt-2">记录每一个灵感碎片</p>
       </div>
 
       {/* Auth Form */}

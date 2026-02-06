@@ -325,14 +325,14 @@ export function StatsPage({ notes, onClose }: StatsPageProps) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-white relative pt-safe">
         <button
           onClick={onClose}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
-        <h1 className="text-base absolute left-1/2 -translate-x-1/2">数据统计</h1>
+        <h1 className="text-base absolute left-1/2 -translate-x-1/2 whitespace-nowrap">数据统计</h1>
         <div className="w-8" />
       </div>
 
@@ -733,6 +733,21 @@ function StatsViewA({
                 </div>
               </div>
             ))}
+            
+            {/* 总计 */}
+            <div className="flex items-center gap-3 pt-2 mt-2 border-t border-border">
+              <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-xs font-medium">
+                ∑
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">总计</span>
+                  <span className="text-xs text-muted-foreground">
+                    {topTags.reduce((sum, [, count]) => sum + count, 0)} 次
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">暂无标签数据</p>
